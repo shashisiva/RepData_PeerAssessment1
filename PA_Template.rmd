@@ -1,0 +1,137 @@
+---
+title: "Peer-graded Assignment: Course Project 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(sqldf)
+library(ggplot2)
+require(lattice) 
+
+
+setwd("C:\\Users\\shash\\Documents\\Data Science\\Course 5\\Week 2\\")
+activityDataOrg <- read.csv("activity.csv", header = TRUE, sep = ',', na.strings = "NA")
+
+activityData <- filter(activityDataOrg, steps != 'NA')
+activityData$date <- as.Date( as.character(activityData$date), "%Y-%m-%d")
+
+steps_by_date <- activityData %>%
+  group_by(date) %>%
+  summarize(steps = sum(steps, na.rm = TRUE))
+
+```
+
+## Part 1 - Steps by Day by filtering for NA
+
+Mean and Median
+
+```{r}
+mean(steps_by_date$steps)
+median(steps_by_date$steps)
+```
+
+Plot
+
+Historgram of Steps by Day:
+
+```{r pressure, echo=FALSE}
+hist(steps_by_date$steps, xlab="Steps", ylab="Day" )
+```
+
+## Part 2 - Time Series - - Steps by Day by filtering for NA
+
+```{r}
+
+steps_by_interval <- activityData %>%
+  group_by(interval) %>%
+  summarize(steps = mean(steps, na.rm = TRUE))
+
+
+x <- steps_by_interval$interval
+y <- steps_by_interval$steps
+
+maxinterval <- filter(steps_by_interval, steps == max(steps_by_interval$steps))
+
+maxinterval$interval
+
+
+```
+
+Plot
+
+
+Plot of Steps by Interval:
+
+```{r pressure1, echo=FALSE}
+plot(x,y,
+     ylab = "Steps", xlab = "Interval", lwd=1,
+     type="l"
+)
+```
+
+## Part 3 - Time Series - Fill in Missing Values
+
+```{r}
+
+nrow(activityDataOrg) - nrow(activityData)
+
+
+steps_by_date_mean <- activityData %>%
+  group_by(date) %>%
+  summarize(steps = mean(steps, na.rm = TRUE))
+
+
+activityDataOrg$steps[is.na(activityDataOrg$steps)] = mean(steps_by_date$steps)
+activityDataOrg$date <- as.Date( as.character(activityDataOrg$date), "%Y-%m-%d")
+
+steps_by_date_narm <- activityDataOrg %>%
+  group_by(date) %>%
+  summarize(steps = sum(steps, na.rm = TRUE))
+
+
+mean(steps_by_date_narm$steps)
+
+
+median(steps_by_date_narm$steps)
+```
+Plot
+
+```{r pressure2, echo=FALSE}
+hist(steps_by_date_narm$steps, xlab="Steps", ylab="Day" )
+
+
+```
+## Part 4 - Time Series - Weekday
+
+
+```{r}
+activityDataOrg$dayType <- ifelse ((weekdays(activityDataOrg$date) == "Sunday" |weekdays(activityDataOrg$date) == "Saturday"),  "Weekend", "Weekday")
+activityDataOrg$dayType <- factor(activityDataOrg$dayType)
+
+
+steps_by_interval_day <- activityDataOrg %>%
+  group_by(interval,dayType) %>%
+  summarize(steps = mean(steps, na.rm = TRUE))
+
+
+
+```
+Plot of Steps by Weekday:
+
+```{r pressure4, echo=FALSE}
+p <- xyplot(steps ~ interval | dayType, steps_by_interval_day, type = "l", layout = c(1, 2), 
+       xlab = "Interval", ylab = "Number of steps")            
+            
+print(p)
+
+
+```
